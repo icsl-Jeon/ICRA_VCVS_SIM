@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+<!--octomap & keypress launch -->
+
+<include file="$(find image_tracking)/launch/octomap_demo.launch">
+ <arg name="mav_name" value="firefly"/>
+</include>
+    
+
+  <!-- target spawn -->
+  <group ns ="target">
+  <include file="$(find turtlebot_gazebo)/launch/includes/kobuki.launch.xml">
+    <arg name="base" value="kobuki"/>
+    <arg name="stacks" value="hexagons"/>
+    <arg name="robot_name" value="target"/>	 
+    <arg name="3d_sensor" value="kinect"/>
+    <arg name="init_pose" value="-x 2.5 -y 0.5"/>
+  </include>
+  
+  	<!-- keyboard control-->
+  <node pkg="turtlebot_teleop" type="turtlebot_teleop_key" name="turtlebot_teleop_keyboard"  output="screen" launch-prefix="xterm -e">
+    <param name="scale_linear" value="0.5" type="double"/>
+    <param name="scale_angular" value="1.5" type="double"/>
+    <remap from="turtlebot_teleop_keyboard/cmd_vel" to="cmd_vel_mux/input/teleop"/>
+  </node>
+  
+  </group>
+ 
+
+	<!--getting search postions from Rviz-->
+	<!--node name="search_position_gui" pkg="rqt_search_position" type="search_position.py"/-->
+	<!--rviz-->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find asap)/rviz/path_solver.rviz"/>
+
+</launch>

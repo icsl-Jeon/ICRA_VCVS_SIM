@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<!--view path solver test-->
+<node name="view_points_solver" pkg="asap" type="asap_path_solver" output="screen"> 
+	<param name="world_frame_id" value="/world" type="str"/> 
+	<param name="tracking_d_min" value="1.5" type="double"/>
+	<param name="tracking_d_max" value="3.0" type="double"/>
+	<param name="tracking_d_N" value="6" type="int"/>
+	<param name="elev_min" value="$(eval 3.141592/10)" type="double"/>
+	<param name="elev_max" value="$(eval 3.141592/5)" type="double"/>
+	<param name="N_azim" value="15" type="int"/> <!--default: 20-->
+	<param name="N_elev" value="3" type="int"/> <!--default: 12-->
+	<param name="local_range" value="1" type="int"/> <!--default: 1-->
+	<param name="N_extrema" value="10" type="int"/> <!--default: 8-->
+	<!--Note: when connecting the tracker and the first layer, we relieve this distance`-->
+	
+	<!--most important tuning parameters-->
+	<param name="max_interval_distance" value="2" type="double"/>
+	<param name="max_interval_distance_init" value="3" type="double"/>
+	
+	<param name="w_v0" value="2.0" type="double"/>
+	<param name="w_j" value="0.5" type="double"/>
+	<param name="replanning_trigger_error" value="0.1" type="double"/> 
+	<param name="tracker_name" value="firefly" type="str"/>
+	<param name="target_name" value="target" type="str"/>
+	<param name="N_history" value="8" type="int"/>
+	<param name="N_prediction" value="4" type="int"/> <!-- actual prediction is N_pred-1 -->
+	<param name="t_prediction" value="4" type="double"/> <!-- caution: CVXGEN fixed variable size-->
+</node>
+</launch>
