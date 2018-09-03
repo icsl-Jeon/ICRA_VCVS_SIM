@@ -42,7 +42,6 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
     // subscribe
     octomap_sub=nh.subscribe("/octomap_full",3,&ASAP::octomap_callback,this);
     states_sub=nh.subscribe("/gazebo/model_states",10,&ASAP::state_callback,this);
-    points_sub=nh.subscribe("/search_position_array",10,&ASAP::points_callback,this);
 
     // advertise
     path_pub=nh.advertise<nav_msgs::Path>("view_sequence",3);
@@ -605,11 +604,7 @@ void ASAP::target_regression() {
 
 		
 
-		std::cout<<"regression started: ----------------"<<std::endl;
 
-		std::cout<<"ts: "<<ts<<std::endl;
-		std::cout<<"is ts same???"<<std::endl;
-		std::cout<<(ts.coeff(0)==ts.coeff(5))<<std::endl;
 //
 //		std::cout<<"xs: "<<xs<<std::endl;
 //		std::cout<<"ys: "<<ys<<std::endl;
@@ -872,7 +867,6 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
 		{
 		// update check point
 		check_pnt=ros::Time::now();
-		std::cout<<ros::Time::now().toSec()<<std::endl;
 		// insertion
 		if(target_history.size()>=this->params.N_history) {
             target_history.pop_front();
@@ -898,19 +892,7 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
 //        ROS_WARN("specified tracker name was not found in gazebo");
 
 }
-void ASAP::points_callback(kiro_gui_msgs::PositionArray positionArray) {
 
-    // receive the target history
-    int N=0;
-    target_prediction.poses.clear();
-    for (auto it = positionArray.positions.begin(),end=positionArray.positions.end();it != end;it++)
-    {
-        it->pose.position.z=0.5;
-        target_prediction.poses.push_back(*it); N++;}
-
-    ROS_INFO("%d points received",N);
-
-}
 
 
 bool ASAP::solve_callback(asap::SolvePath::Request& req,asap::SolvePath::Response& rep) {

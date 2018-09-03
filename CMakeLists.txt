@@ -57,6 +57,8 @@ link_libraries(${OCTOMAP_LIBRARIES})
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_libraries(${OpenCV_LIBRARIES})
+#MAVROS
+set(mav_msgs_DIR /home/jbs/mavros_ws/devel/share/mav_msgs/cmake)
 
 
 #-------------------#
@@ -64,7 +66,7 @@ link_libraries(${OpenCV_LIBRARIES})
 #-------------------#
 
 
-find_package(catkin REQUIRED COMPONENTS gazebo_msgs geometry_msgs octomap_ros mav_msgs roscpp sensor_msgs octomap_msgs message_generation kiro_gui_msgs trajectory_msgs)
+find_package(catkin REQUIRED COMPONENTS gazebo_msgs geometry_msgs octomap_ros mav_msgs roscpp sensor_msgs octomap_msgs message_generation trajectory_msgs)
 
 add_service_files(
     FILES
@@ -76,7 +78,7 @@ generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
    geometry_msgs
-   kiro_gui_msgs
+   
 )
 
 

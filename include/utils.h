@@ -35,7 +35,6 @@
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <kiro_gui_msgs/PositionArray.h>
 #include <asap/SolvePath.h>
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/default_topics.h>

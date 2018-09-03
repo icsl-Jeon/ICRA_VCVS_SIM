@@ -46,7 +46,7 @@ MatrixXd SEDT(MatrixXd binaryMatrix){
     distanceTransform(bw_cast, dist2, CV_DIST_L2, 0);
     dist=dist1-dist2;
 
-    cv::Mat sliced_dist=dist.colRange(N_azim+1,2*N_azim);
+    cv::Mat sliced_dist=dist.colRange(N_azim,2*N_azim);
 
     MatrixXd mat;
     cv2eigen(sliced_dist,mat);
