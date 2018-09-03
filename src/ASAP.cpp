@@ -283,18 +283,23 @@ MatrixXd ASAP::castRay(geometry_msgs::Point rayStartPnt, float ray_length,bool v
         for (unsigned int ind_elev = 0; ind_elev < params.N_elev; ind_elev++)
             for (unsigned int ind_azim = 0; ind_azim < params.N_azim; ind_azim++) {
 
-                octomap::point3d light_end; //endpoint of ray whether the ray was hit
                 octomap::point3d light_dir(float (cos(elev_set[ind_elev])*cos(azim_set[ind_azim])),
                                   float(cos(elev_set[ind_elev]) * sin(azim_set[ind_azim])),
                                   float(sin(elev_set[ind_elev])));
+                octomap::point3d light_end = light_start +  light_dir * ray_length; //endpoint of ray whether the ray was hit
 
-                // if hit
-                if(octree_obj->castRay(light_start, light_dir, light_end,
-                                       ignoreUnknownCells, ray_length))
-                    castResultBinary.coeffRef(ind_elev, ind_azim) = 1;
+                if(this->collision_check(light_start,light_end))
+                    castResultBinary.coeffRef(ind_elev,ind_azim) = 1;
                 else
-                    // no hit = just tracking distance
-                    castResultBinary.coeffRef(ind_elev,ind_azim)=0;
+                    castResultBinary.coeffRef(ind_elev,ind_azim) = 0;
+
+//                // if hit
+//                if(octree_obj->castRay(light_start, light_dir, light_end,
+//                                       ignoreUnknownCells, ray_length))
+//                    castResultBinary.coeffRef(ind_elev, ind_azim) = 1;
+//                else
+//                    // no hit = just tracking distance
+//                    castResultBinary.coeffRef(ind_elev,ind_azim)=0;
             }
 
         // print the cast result
@@ -327,12 +332,12 @@ Layer ASAP::get_layer(geometry_msgs::Point light_source,int t_idx){
         // if we SEDT on zero matrix, it will be disaster
         if(binaryCast.isZero(0)) {
             isFree=true;
-//            std::cout << "===============================" << std::endl;
-//            std::cout << binaryCast << std::endl;
-//            std::cout << "-------------------------------" << std::endl;
-//            std::cout << "Equal distribution" <<std::endl;
-//            std::cout << "===============================" << std::endl;
-            extrema = equal_dist_idx_set(binaryCast.rows(), binaryCast.cols(),2,8);
+            std::cout << "===============================" << std::endl;
+            std::cout << binaryCast << std::endl;
+            std::cout << "-------------------------------" << std::endl;
+            std::cout << "Equal distribution" <<std::endl;
+            std::cout << "===============================" << std::endl;
+            extrema = equal_dist_idx_set(binaryCast.rows(), binaryCast.cols(),1,8);
 //            ROS_INFO("found extrema: %d", extrema.size());
 
         }
@@ -340,11 +345,11 @@ Layer ASAP::get_layer(geometry_msgs::Point light_source,int t_idx){
 
             sdf = SEDT(binaryCast); // signed distance field
             isFree=false;
-//            std::cout << "===============================" << std::endl;
-//            std::cout << binaryCast << std::endl;
-//            std::cout << "-------------------------------" << std::endl;
-//            std::cout << sdf << std::endl;
-//            std::cout << "===============================" << std::endl;
+            std::cout << "===============================" << std::endl;
+            std::cout << binaryCast << std::endl;
+            std::cout << "-------------------------------" << std::endl;
+            std::cout << sdf << std::endl;
+            std::cout << "===============================" << std::endl;
             // normalization should be performed
             mat_normalize(sdf); // sdf normalized
             extrema = localMaxima(sdf, params.N_extrem, params.local_range);
@@ -447,7 +452,7 @@ void ASAP::add_layer(Layer layer,double d_max,double d_max0) {
             Weight w;
             w=dist+params.w_v0*(layer.t_idx)/vis; // we assgin higher weight for later target position
 //            std::cout<<"weight: "<<w<<std::endl;
-            if (dist <d_max0){
+            if (dist <d_max0 and !(this->collision_check(P1,P2))){
                 boost::add_edge(descriptor_map["x0"], v, w, g);
                 edge_marker.points.clear();
                 edge_marker.points.push_back(graph_init_point);
@@ -494,7 +499,7 @@ void ASAP::add_layer(Layer layer,double d_max,double d_max0) {
                 octomap::point3d P2(it2->position.x,it2->position.y,it2->position.z);
                 double dist=P1.distance(P2);
 //                printf("node distance: %.4f\n",dist);
-                if (dist<d_max){
+                if (dist<d_max and !(this->collision_check(P1,P2))){
                     Weight w;
                     w=P1.distance(P2)+params.w_v0*layer.t_idx/it2->visibility;
 
@@ -893,7 +898,27 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
 
 }
 
+bool ASAP::collision_check(octomap::point3d P1,octomap::point3d P2) {
 
+
+    if ((P1-P2).norm() != 0) {
+
+        std::vector<octomap::point3d> traverse_points;
+        this->octree_obj->computeRay(P1, P2, traverse_points);
+        for (auto it = traverse_points.begin(); it < traverse_points.end(); it++) {
+            octomap::OcTreeNode *node = octree_obj->search(*it);
+            if(node) // known
+                if(octree_obj->isNodeOccupied(node))
+                    return true;
+            //unknown point : pass...
+
+        }
+        return false;
+    }else{
+        return false;
+    }
+
+}
 
 bool ASAP::solve_callback(asap::SolvePath::Request& req,asap::SolvePath::Response& rep) {
 

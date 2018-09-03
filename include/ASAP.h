@@ -172,7 +172,7 @@ public:
     void target_future_prediction(); // update target future trajectory
     bool reactive_planning(double,double); // graph construction + solve path altogether
     void smooth_path_update(); // spline curve saving
-
+    bool collision_check(octomap::point3d,octomap::point3d); // collision checking
 
 
     // publish
