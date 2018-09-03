@@ -15,7 +15,8 @@
     <arg name="stacks" value="hexagons"/>
     <arg name="robot_name" value="target"/>	 
     <arg name="3d_sensor" value="kinect"/>
-    <arg name="init_pose" value="-x 2.5 -y 0.5"/>
+    <!--arg name="init_pose" value="-x 2.5 -y 0.5"/-->
+    <arg name="init_pose" value="-x 1.5 -y 0.0"/>
   </include>
   
   	<!-- keyboard control-->
