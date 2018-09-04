@@ -928,19 +928,17 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
 
 bool ASAP::collision_check(octomap::point3d P1,octomap::point3d P2) {
 
-    this->distmap_ptr->update();
-    ROS_WARN_STREAM("update !");
-
     if ((P1-P2).norm() != 0) {
-
         std::vector<octomap::point3d> traverse_points;
         this->octree_obj->computeRay(P1, P2, traverse_points);
 
         for (auto it = traverse_points.begin(); it < traverse_points.end(); it++) {
             octomap::OcTreeNode *node = octree_obj->search(*it);
             if(node) // known
-                if(octree_obj->isNodeOccupied(node) or (distmap_ptr->getDistance(*it) < this->inflation_length))
+            {   octomap::OcTreeKey key = octree_obj->coordToKey(*it);
+                if(octree_obj->isNodeOccupied(node))
                     return true;
+            }
             //unknown point : pass...
 
         }
@@ -1033,17 +1031,15 @@ void ASAP::octomap_callback(const octomap_msgs::Octomap & msg) {
 
 
     DynamicEDTOctomap distmap_temp(maxDist,octree_obj.get(),
-                                   inflation_min_point + tracker_pos,
-                                   inflation_max_point + tracker_pos,
+                                   tracker_pos + inflation_min_point,
+                                   tracker_pos + inflation_max_point,
                                    unknownAsOccupied);
 
 
 
-    distmap_temp.update();
+    distmap_temp.update(); // calculate distance field
     *distmap_ptr = distmap_temp;
 
-    ROS_WARN_STREAM(inflation_min_point + tracker_pos);
-    ROS_WARN_STREAM(inflation_max_point + tracker_pos);
 
 
     isDistMapInit = true;
@@ -1058,12 +1054,16 @@ void ASAP::octomap_callback(const octomap_msgs::Octomap & msg) {
                                 float(octree_obj->getResolution()),
                                 float(octree_obj->getResolution()));
 
+    double thresMax = octree_obj->getClampingThresMax();
+
+
     for (octomap::OcTree::leaf_bbx_iterator it = octree_obj->begin_leafs_bbx(inflation_min_point + tracker_pos + viz_margin ,
                                                                              inflation_max_point + tracker_pos - viz_margin ),
-                 end = octree_obj->end_leafs_bbx(); it != end; ++it)
-        // current point
-    {octomap::point3d cur_point = it.getCoordinate();
+                 end = octree_obj->end_leafs_bbx(); it != end; ++it) {
+        octomap::point3d cur_point = it.getCoordinate();
         if (distmap_ptr->getDistance(cur_point) < inflation_length){
+            // inflate this voxel
+            it->setLogOdds(octomap::logodds(thresMax));
             geometry_msgs::Point node_center;
             node_center.x = cur_point.x();
             node_center.y = cur_point.y();
