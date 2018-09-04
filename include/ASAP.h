@@ -68,6 +68,12 @@ private:
     // quad_path
     trajectory_msgs::MultiDOFJointTrajectory quad_waypoint;
 
+    /**
+     * Distance Transform
+     */
+    DynamicEDTOctomap* distmap_ptr;
+    double inflation_length;
+
 
 public:
     // constructor destructor
@@ -93,6 +99,7 @@ public:
     bool state_callback_flag;
     bool octomap_callback_flag;
     bool model_regression_flag;
+    bool isDistMapInit;
 
     // target prediction error
     double prediction_error;
@@ -116,6 +123,8 @@ public:
     ros::Publisher waypoint_viz_pub; // waypoint marker publisher
     ros::Publisher traj_pub; // trajectory publisher
     ros::Publisher BBMarker_pub; // bounding box publisher
+    ros::Publisher inflation_marker_pub; // bounding box publisher
+
 
     ros::ServiceServer solve_server; // server for solving view path
     // id
@@ -130,7 +139,9 @@ public:
     visualization_msgs::Marker node_marker; // marker for nodes
     visualization_msgs::Marker edge_marker; // marker for edges
     visualization_msgs::MarkerArray arrow_array; // array of arrow
+    visualization_msgs::Marker inflation_marker;
     visualization_msgs::Marker BBMarker; // bounding box marker
+
     int edge_id;
 
 
@@ -180,6 +191,7 @@ public:
     void points_publish(); // for the purpose of test (publish the received points)
     void path_publish();   // solution path publication
     void quad_waypoint_pub(); // waypoint publish for quad
+    void inflation_pub(); // inflated octomap marker publish
 
     // callback (subsrcibe)
     void state_callback(const gazebo_msgs::ModelStates::ConstPtr&);

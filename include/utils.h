@@ -61,6 +61,7 @@
 #include <octomap/OcTreeBase.h>
 #include <octomap/octomap_types.h>
 #include <octomap_msgs/conversions.h>
+#include <dynamicEDT3D/dynamicEDTOctomap.h>
 
 
 // POLY_TARJ_GEN

@@ -84,6 +84,8 @@ int main(int argc,char **argv){
 
     std::cout<<"tracker name: "<<asap_params.tracker_name<<" target_name: "<<asap_params.target_name<<std::endl;
 
+
+
     ASAP asap_obj(asap_params);
 
     // for record
@@ -117,7 +119,7 @@ int main(int argc,char **argv){
 
     // main loop
     while(ros::ok()){
-        if (asap_obj.octomap_callback_flag && asap_obj.state_callback_flag)
+        if (asap_obj.octomap_callback_flag && asap_obj.state_callback_flag && asap_obj.isDistMapInit)
         {
 
 

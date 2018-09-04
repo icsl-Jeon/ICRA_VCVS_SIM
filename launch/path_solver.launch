@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 <!--view path solver test-->
-<node name="view_points_solver" pkg="asap" type="asap_path_solver" output="screen"> 
+<node name="view_points_solver" pkg="asap" type="asap_path_solver" output="screen" launch-prefix="xterm -e gdb --args"> 
 	<param name="world_frame_id" value="/world" type="str"/> 
 	<param name="tracking_d_min" value="1.5" type="double"/>
-	<param name="tracking_d_max" value="3.0" type="double"/>
+	<param name="tracking_d_max" value="2.0" type="double"/>
 	<param name="tracking_d_N" value="3" type="int"/>
+	<param name="inflation_length" value="0.6" type="double"/>
 	<param name="elev_min" value="$(eval 3.141592/10)" type="double"/>
 	<param name="elev_max" value="$(eval 3.141592/6)" type="double"/>
 	<param name="N_azim" value="15" type="int"/> <!--default: 20-->
@@ -15,8 +16,8 @@
 	<!--Note: when connecting the tracker and the first layer, we relieve this distance`-->
 	
 	<!--most important tuning parameters-->
-	<param name="max_interval_distance" value="2" type="double"/>
-	<param name="max_interval_distance_init" value="3" type="double"/>
+	<param name="max_interval_distance" value="1.5" type="double"/>
+	<param name="max_interval_distance_init" value="2" type="double"/>
 	
 	<param name="w_v0" value="2.0" type="double"/>
 	<param name="w_j" value="0.5" type="double"/>

@@ -53,6 +53,11 @@ find_package(octomap REQUIRED)
 include_directories(${OCTOMAP_INCLUDE_DIRS})
 link_libraries(${OCTOMAP_LIBRARIES})
 
+#EDT 
+find_package(dynamicEDT3D REQUIRED)
+include_directories(${DYNAMICEDT3D_INCLUDE_DIRS})
+link_libraries(${DYNAMICEDT3D_LIBRARIES})
+
 #OPENCV
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})

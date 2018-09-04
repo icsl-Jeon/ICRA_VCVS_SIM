@@ -16,6 +16,8 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
     time_history.resize(this->params.N_history);
 
     prediction_error=params.replanning_trigger_error+1; // so that planning is started at the first time
+    isDistMapInit = false;
+
 
     // now
 	double duration=0.05; // 20Hz
@@ -26,10 +28,11 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
 
 
     nh.getParam("world_frame_id",world_frame_id);
+    nh.getParam("inflation_length",inflation_length);
+
 
     std::cout<<"world frame id:"<<world_frame_id<<std::endl;
     target_prediction.header.frame_id=world_frame_id;
-
     // name
 
     target_name=params.target_name;
@@ -55,7 +58,7 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
     BBMarker_pub=nh.advertise<visualization_msgs::Marker>("bounding_box_target",2);
     smooth_path_pub=nh.advertise<nav_msgs::Path>("smooth_path",2);
     traj_pub=nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>("/"+tracker_name+"/"+mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
-
+    inflation_marker_pub = nh.advertise<visualization_msgs::Marker>("inflation_region",2);
 
     // bgr colormap setting
     cv::Mat cvVec(1,params.N_pred,CV_8UC1);
@@ -84,6 +87,28 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
     marker.scale.z = scale;
     marker.color.r = 1;
     marker.color.a = 0.5;
+
+
+
+    // candid nodes marker init
+    inflation_marker.header.frame_id = world_frame_id;
+    inflation_marker.header.stamp = ros::Time::now();
+    inflation_marker.ns = "inflation_markers";
+    inflation_marker.action = visualization_msgs::Marker::ADD;
+    // let's decide resolution later
+    inflation_marker.pose.orientation.w = 1.0;
+    inflation_marker.id = 0;
+    inflation_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    inflation_marker.color.r = 0.2;
+    inflation_marker.color.g = 0.2;
+    inflation_marker.color.b = 0.2;
+    inflation_marker.color.a = 0.3;
+
+
+    octomap::point3d min(0,0,0);
+    octomap::point3d max(2,2,2);
+    octree_obj.reset(new octomap::OcTree(0.4));
+    distmap_ptr = new DynamicEDTOctomap(1,octree_obj.get(),min,max,true);
 
     // skeleton marker
     float skeleton_scale=0.1;
@@ -184,6 +209,9 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
     // azimuth, elevation set constructing
     azim_set.setLinSpaced(params.N_azim,0,2*PI);
     elev_set.setLinSpaced(params.N_elev,params.elev_min,params.elev_max);
+
+
+
 }
 
 void ASAP::hovering(ros::Duration dur,double hovering_z){
@@ -849,7 +877,7 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
     if (target_idx<model_names.size()) {
 
         cur_target_pos=pose_vector[target_idx].position;
-        cur_target_pos.z=0.5; // let's
+        cur_target_pos.z=0.3; // let's
 
         // accumulating prediction error
         if(model_regression_flag) {
@@ -900,15 +928,18 @@ void ASAP::state_callback(const gazebo_msgs::ModelStates::ConstPtr& gazebo_msg) 
 
 bool ASAP::collision_check(octomap::point3d P1,octomap::point3d P2) {
 
+    this->distmap_ptr->update();
+    ROS_WARN_STREAM("update !");
 
     if ((P1-P2).norm() != 0) {
 
         std::vector<octomap::point3d> traverse_points;
         this->octree_obj->computeRay(P1, P2, traverse_points);
+
         for (auto it = traverse_points.begin(); it < traverse_points.end(); it++) {
             octomap::OcTreeNode *node = octree_obj->search(*it);
             if(node) // known
-                if(octree_obj->isNodeOccupied(node))
+                if(octree_obj->isNodeOccupied(node) or (distmap_ptr->getDistance(*it) < this->inflation_length))
                     return true;
             //unknown point : pass...
 
@@ -978,9 +1009,68 @@ void ASAP::octomap_callback(const octomap_msgs::Octomap & msg) {
 //    octomap_msgs::readTree(octree_obj,msg);
 
     octree_obj.reset(dynamic_cast<octomap::OcTree*>(octomap_msgs::fullMsgToMap(msg)));
+
     //octree update
 
+    // EDT & inflation
 
+    // nodes around tracker
+    octomap::point3d tracker_pos(cur_tracker_pos.x,cur_tracker_pos.y,cur_tracker_pos.z);
+    double lxx = this->params.tracking_ds.back() * 3;
+    double lyy = this->params.tracking_ds.back() * 3;
+    double lzz = 2;
+
+    octomap::point3d inflation_min_point(-lxx,-lyy,-lzz);
+    octomap::point3d inflation_max_point(lxx,lyy,lzz);
+
+
+    double min_x,min_y,min_z,max_x,max_y,max_z;
+    octree_obj->getMetricMin(min_x,min_y,min_z);
+    octree_obj->getMetricMax(max_x,max_y,max_z);
+    bool unknownAsOccupied = false;
+    double maxDist = 0.5;
+
+
+
+    DynamicEDTOctomap distmap_temp(maxDist,octree_obj.get(),
+                                   inflation_min_point + tracker_pos,
+                                   inflation_max_point + tracker_pos,
+                                   unknownAsOccupied);
+
+
+
+    distmap_temp.update();
+    *distmap_ptr = distmap_temp;
+
+    ROS_WARN_STREAM(inflation_min_point + tracker_pos);
+    ROS_WARN_STREAM(inflation_max_point + tracker_pos);
+
+
+    isDistMapInit = true;
+
+    // update distmap
+    inflation_marker.points.clear();
+    inflation_marker.scale.x = float(octree_obj->getResolution());
+    inflation_marker.scale.y = float(octree_obj->getResolution());
+    inflation_marker.scale.z = float(octree_obj->getResolution());
+
+    octomap::point3d viz_margin(float(octree_obj->getResolution()),
+                                float(octree_obj->getResolution()),
+                                float(octree_obj->getResolution()));
+
+    for (octomap::OcTree::leaf_bbx_iterator it = octree_obj->begin_leafs_bbx(inflation_min_point + tracker_pos + viz_margin ,
+                                                                             inflation_max_point + tracker_pos - viz_margin ),
+                 end = octree_obj->end_leafs_bbx(); it != end; ++it)
+        // current point
+    {octomap::point3d cur_point = it.getCoordinate();
+        if (distmap_ptr->getDistance(cur_point) < inflation_length){
+            geometry_msgs::Point node_center;
+            node_center.x = cur_point.x();
+            node_center.y = cur_point.y();
+            node_center.z = cur_point.z();
+            inflation_marker.points.push_back(node_center);
+        }
+    }
 
 
 
@@ -1024,6 +1114,9 @@ void ASAP::marker_publish() {
 
     // edge publish
     edge_pub.publish(arrow_array);
+    if (isDistMapInit)
+        inflation_marker_pub.publish(inflation_marker);
+
 }
 
 
