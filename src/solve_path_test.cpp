@@ -110,7 +110,7 @@ int main(int argc,char **argv){
     ros::Time record_ckp=ros::Time::now();
 
 
-    asap_obj.hovering(ros::Duration(1.0),double(1));
+    asap_obj.hovering(ros::Duration(1.0),-1,0,double(1));
 
 
     // checkpoint for calculation of velocity

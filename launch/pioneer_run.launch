@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<node name="tf_for_pioneer" pkg="zed_tracking" type="tf_pioneer">
+	<param name ="your_world_frame_id" value="/world" type="str"/> 
+	<param name ="pose_topic_name" value="/vicon/pioneer/pioneer" type="str"/> 
+</node>
+
+<node name="pioneer_move_base" pkg="move_base" type="move_base" output="screen">
+	<param name ="global_costmap/robot_base_frame" value="/vicon/pioneer/pioneer" type="str"/> 
+	<param name ="global_costmap/global_frame" value="/world" type="str"/> 
+</node>
+</launch>

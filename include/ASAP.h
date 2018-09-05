@@ -173,7 +173,7 @@ public:
      * Utils
      */
     MatrixXd castRay(geometry_msgs::Point,float,bool=false); // cast ray in octomap
-    void hovering(ros::Duration,double); // execute hovering for quadrotor
+    void hovering(ros::Duration,double,double,double); // execute hovering for quadrotor
 
 
     /*

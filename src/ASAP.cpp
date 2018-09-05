@@ -214,13 +214,12 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
 
 }
 
-void ASAP::hovering(ros::Duration dur,double hovering_z){
+void ASAP::hovering(ros::Duration dur, double hovering_x, double hovering_y, double hovering_z){
 	
         double hovering_start= ros::Time::now().toSec();
-		ROS_INFO_ONCE("hovering during %f [sec]",dur.toSec());
-	    Eigen::Vector3d waypoint(0, 0,hovering_z);
+		ROS_INFO_ONCE("hovering during %f [sec] at [%f, %f, %f]",dur.toSec(),cur_tracker_pos.x,cur_tracker_pos.y,hovering_z);
+	    Eigen::Vector3d waypoint(hovering_x, hovering_y,hovering_z);
 		mav_msgs::msgMultiDofJointTrajectoryFromPositionYaw(waypoint,0, &quad_waypoint);
-
 		while (ros::Time::now().toSec()-hovering_start<dur.toSec())
         traj_pub.publish(quad_waypoint);
 	
@@ -360,12 +359,14 @@ Layer ASAP::get_layer(geometry_msgs::Point light_source,int t_idx){
         // if we SEDT on zero matrix, it will be disaster
         if(binaryCast.isZero(0)) {
             isFree=true;
-            std::cout << "===============================" << std::endl;
+            /**
+			std::cout << "===============================" << std::endl;
             std::cout << binaryCast << std::endl;
             std::cout << "-------------------------------" << std::endl;
             std::cout << "Equal distribution" <<std::endl;
             std::cout << "===============================" << std::endl;
-            extrema = equal_dist_idx_set(binaryCast.rows(), binaryCast.cols(),1,8);
+            **/
+			extrema = equal_dist_idx_set(binaryCast.rows(), binaryCast.cols(),1,8);
 //            ROS_INFO("found extrema: %d", extrema.size());
 
         }
@@ -373,12 +374,14 @@ Layer ASAP::get_layer(geometry_msgs::Point light_source,int t_idx){
 
             sdf = SEDT(binaryCast); // signed distance field
             isFree=false;
-            std::cout << "===============================" << std::endl;
+            /**
+			std::cout << "===============================" << std::endl;
             std::cout << binaryCast << std::endl;
             std::cout << "-------------------------------" << std::endl;
             std::cout << sdf << std::endl;
             std::cout << "===============================" << std::endl;
-            // normalization should be performed
+            **/
+			// normalization should be performed
             mat_normalize(sdf); // sdf normalized
             extrema = localMaxima(sdf, params.N_extrem, params.local_range);
 //            ROS_INFO("found extrema: %d", extrema.size());
