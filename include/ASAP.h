@@ -195,7 +195,6 @@ public:
 
     // callback (subsrcibe)
     void state_callback(const gazebo_msgs::ModelStates::ConstPtr&);
-    bool solve_callback(asap::SolvePath::Request&,asap::SolvePath::Response&); // service callback
     void octomap_callback(const octomap_msgs::Octomap&);
 };
 

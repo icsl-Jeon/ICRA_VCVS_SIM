@@ -71,7 +71,6 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
    
 
     // service
-    solve_server = nh.advertiseService("solve_path",&ASAP::solve_callback,this);
 
     // candid nodes marker init
     marker.header.frame_id = world_frame_id;
@@ -217,7 +216,7 @@ ASAP::ASAP(asap_ns::Params params):nh("~"){
 void ASAP::hovering(ros::Duration dur, double hovering_x, double hovering_y, double hovering_z){
 	
         double hovering_start= ros::Time::now().toSec();
-		ROS_INFO_ONCE("hovering during %f [sec] at [%f, %f, %f]",dur.toSec(),cur_tracker_pos.x,cur_tracker_pos.y,hovering_z);
+		ROS_INFO_ONCE("hovering during %f [sec] at [%f, %f, %f]",dur.toSec(),hovering_x,hovering_y,hovering_z);
 	    Eigen::Vector3d waypoint(hovering_x, hovering_y,hovering_z);
 		mav_msgs::msgMultiDofJointTrajectoryFromPositionYaw(waypoint,0, &quad_waypoint);
 		while (ros::Time::now().toSec()-hovering_start<dur.toSec())
@@ -951,56 +950,6 @@ bool ASAP::collision_check(octomap::point3d P1,octomap::point3d P2) {
     }
 
 }
-
-bool ASAP::solve_callback(asap::SolvePath::Request& req,asap::SolvePath::Response& rep) {
-
-    // Building graph
-
-    graph_init();
-    int t_idx=1;
-    ROS_INFO("size of prediction pnts: %d",target_prediction.poses.size());
-    for (auto it = target_prediction.poses.begin(),end=target_prediction.poses.end();it != end;it++,t_idx++)
-    {
-
-        Layer layer=get_layer(it->pose.position,t_idx);
-        printf("------------------------------\n");
-        ROS_INFO("found layer: %dth predicition",t_idx);
-        add_layer(layer,params.max_interval_distance,params.max_interval_distance_init);
-    }
-
-    graph_wrapping();
-    ROS_INFO("finished graph");
-
-
-    // graph inspection
-
-    IndexMap index = get(boost::vertex_index, g);
-    std::cout << "vertices(g) = ";
-    typedef boost::graph_traits<Graph>::vertex_iterator vertex_iter;
-    std::pair<vertex_iter, vertex_iter> vp;
-    for (vp = vertices(g); vp.first != vp.second; ++vp.first) {
-        Vertex v = *vp.first;
-        std::cout << index[v] <<  " ";
-    }
-//    std::cout << std::endl;
-
-    std::cout << "edges(g) = ";
-    boost::graph_traits<Graph>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end) = edges(g); ei != ei_end; ++ei)
-        std::cout << "(" << index[source(*ei, g)]
-                  << "," << index[target(*ei, g)] << ") ";
-//    std::cout << std::endl;
-
-
-    std::cout << "number of node markers: "<<node_marker.points.size()<<std::endl;
-
-
-    solve_view_path();
-    ROS_INFO("Dijkstra solved");
-
-    return true;
-}
-
 void ASAP::octomap_callback(const octomap_msgs::Octomap & msg) {
 
 

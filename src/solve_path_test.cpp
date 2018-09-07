@@ -22,7 +22,7 @@ int main(int argc,char **argv){
     ros::NodeHandle nh_private("~");
 
 
-
+	double hovering_x,hovering_y;
 
 
     asap_ns::Params asap_params;
@@ -43,6 +43,9 @@ int main(int argc,char **argv){
 
     nh_private.getParam("elev_min", asap_params.elev_min);
     nh_private.getParam("elev_max", asap_params.elev_max);
+    
+	nh_private.getParam("hovering_x", hovering_x);
+    nh_private.getParam("hovering_y", hovering_y);
 
     nh_private.getParam("N_azim", asap_params.N_azim);
     nh_private.getParam("N_elev",asap_params.N_elev);
@@ -110,7 +113,7 @@ int main(int argc,char **argv){
     ros::Time record_ckp=ros::Time::now();
 
 
-    asap_obj.hovering(ros::Duration(1.0),-1,0,double(1));
+    asap_obj.hovering(ros::Duration(1.0),hovering_x,hovering_y,double(1));
 
 
     // checkpoint for calculation of velocity
@@ -165,21 +168,25 @@ int main(int argc,char **argv){
             asap_obj.path_publish(); // skeleton + smooth path publish
             asap_obj.marker_publish();
             asap_obj.points_publish();
-        }
+
+	        // record
+
+    	    if((ros::Time::now()-record_ckp).toSec()>record_rate){
+
+        	    record_ckp=ros::Time::now();
+            	asap_obj.record(target_traj_record,tracker_traj_record,bearing_vector_list);
+
+        	}
+
+        	target_traj_record_pub.publish(target_traj_record);
+        	tracker_traj_record_pub.publish(tracker_traj_record);
+        	bearing_vector_list_pub.publish(bearing_vector_list);
 
 
-        // record
 
-        if((ros::Time::now()-record_ckp).toSec()>record_rate){
 
-            record_ckp=ros::Time::now();
-            asap_obj.record(target_traj_record,tracker_traj_record,bearing_vector_list);
 
-        }
-
-        target_traj_record_pub.publish(target_traj_record);
-        tracker_traj_record_pub.publish(tracker_traj_record);
-        bearing_vector_list_pub.publish(bearing_vector_list);
+	}
 
 
         ros::spinOnce();

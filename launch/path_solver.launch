@@ -2,13 +2,17 @@
 <launch>
 <!--view path solver test-->
 <node name="view_points_solver" pkg="asap" type="asap_path_solver" output="screen" launch-prefix="xterm -e gdb --args"> 
+	
+	<param name="hovering_x" value="-2.6" type="double"/>
+	<param name="hovering_y" value="0.008" type="double"/>
+	
 	<param name="world_frame_id" value="/world" type="str"/> 
-	<param name="tracking_d_min" value="1.5" type="double"/>
-	<param name="tracking_d_max" value="1.8" type="double"/>
+	<param name="tracking_d_min" value="0.7" type="double"/>
+	<param name="tracking_d_max" value="1.2" type="double"/>
 	<param name="tracking_d_N" value="3" type="int"/>
-	<param name="inflation_length" value="0.6" type="double"/>
-	<param name="elev_min" value="$(eval 3.141592/10)" type="double"/>
-	<param name="elev_max" value="$(eval 3.141592/9)" type="double"/>
+	<param name="inflation_length" value="0.4" type="double"/>
+	<param name="elev_min" value="$(eval 3.141592/5)" type="double"/>
+	<param name="elev_max" value="$(eval 3.141592/4)" type="double"/>
 	<param name="N_azim" value="20" type="int"/> <!--default: 20-->
 	<param name="N_elev" value="1" type="int"/> <!--default: 12/ but for three dim prob, not set 1--> 
 	<param name="local_range" value="1" type="int"/> <!--default: 1-->
@@ -16,10 +20,10 @@
 	<!--Note: when connecting the tracker and the first layer, we relieve this distance`-->
 	
 	<!--most important tuning parameters-->
-	<param name="max_interval_distance" value="1.2" type="double"/>
-	<param name="max_interval_distance_init" value="1.2" type="double"/>
+	<param name="max_interval_distance" value="0.7" type="double"/>
+	<param name="max_interval_distance_init" value="1.0" type="double"/>
 	
-	<param name="w_v0" value="1.0" type="double"/>
+	<param name="w_v0" value="0.5" type="double"/>
 	<param name="w_j" value="0.5" type="double"/>
 	<param name="replanning_trigger_error" value="0.1" type="double"/> 
 	<param name="tracker_name" value="firefly" type="str"/>
